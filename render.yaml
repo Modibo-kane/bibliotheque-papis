@@ -1,0 +1,36 @@
+# Ceci est un plan "Blueprint" pour Render.
+# Il définit les services qui composent votre application.
+
+services:
+  # Un service web pour l'application PHP
+  - type: web
+    name: bibliotheque-app
+    # Utilise Docker pour construire et exécuter l'application
+    runtime: docker
+    # Chemin vers le Dockerfile
+    dockerfilePath: ./Dockerfile
+    # Variables d'environnement pour la connexion à la base de données.
+    # Render remplacera automatiquement les 'valueFrom' par les bonnes valeurs.
+    envVars:
+      - key: DB_HOST
+        fromService:
+          type: psql # ou 'mysql' si vous préférez, Render gère les deux
+          name: bibliotheque-db
+          property: host
+      - key: DB_NAME
+        value: biblioteque # Le nom de votre base de données
+      - key: DB_USER
+        fromService:
+          type: psql
+          name: bibliotheque-db
+          property: user
+      - key: DB_PASS
+        fromService:
+          type: psql
+          name: bibliotheque-db
+          property: password
+
+  # Un service de base de données PostgreSQL (ou MySQL)
+  - type: psql # PostgreSQL est souvent recommandé et bien supporté.
+    name: bibliotheque-db
+    plan: free # Utilise le plan gratuit pour commencer
