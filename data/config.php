@@ -6,7 +6,7 @@ $driver = getenv('DB_DRIVER') ?: 'mysql';
 // Lire les variables d'environnement.
 // Les valeurs par défaut sont pour un environnement de développement local (XAMPP/MySQL).
 $host = getenv('DB_HOST') ?: 'localhost';
-$dbname = getenv('DB_NAME') ?: 'biblioteque';
+$dbname = getenv('DB_NAME') ?: 'bibliotheque';
 $user = getenv('DB_USER') ?: 'root';
 $password = getenv('DB_PASS') ?: 'modiboKane994'; // <-- IMPORTANT: Mettez ici le mot de passe de votre base de données locale (XAMPP). Souvent, il est vide.
 
