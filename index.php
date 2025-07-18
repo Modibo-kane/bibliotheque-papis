@@ -1,3 +1,10 @@
+<?php
+if (session_status() === PHP_SESSION_NONE) {
+    session_start();// On démarre la session sur chaque page où le header est inclus
+// pour avoir accès aux variables de session.
+}
+?>
+
 <!DOCTYPE html>
 <html lang="fr">
 <head>

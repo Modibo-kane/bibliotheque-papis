@@ -1,9 +1,3 @@
-<?php
-if (session_status() === PHP_SESSION_NONE) {
-    session_start();// On démarre la session sur chaque page où le header est inclus
-// pour avoir accès aux variables de session.
-}
-?>
 <header class="bg-gray-800 text-white flex justify-evenly items-center p-4 w-full ">
   <div class="text-blue-500 px-4 py-2 font-bold capitalize hover:text-blue-300 text-xl cursor-pointer"><a href="../index.php">home</a></div>
   <div class="flex gap-4">
