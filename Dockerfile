@@ -1,16 +1,13 @@
 # Utiliser une image officielle PHP avec le serveur web Apache
-FROM php:8.1-apache-alpine
+FROM php:8.1-apache
 
-# Mettre à jour les paquets pour corriger les vulnérabilités de sécurité connues
-# Le -y confirme automatiquement toutes les invites
-RUN apt-get update && apt-get upgrade -y
-
-# Installer les extensions PHP nécessaires pour se connecter à MySQL
-# pdo_mysql est l'extension utilisée par votre code via PDO
-RUN docker-php-ext-install pdo_mysql
-
-# Activer le module de réécriture d'Apache (bonne pratique)
-RUN a2enmod rewrite
+# Mettre à jour les paquets, installer les extensions et activer les modules en une seule étape
+# pour optimiser la taille de l'image.
+RUN apt-get update && apt-get upgrade -y \
+    && docker-php-ext-install pdo_mysql \
+    && a2enmod rewrite \
+    # Nettoyer le cache apt pour réduire la taille de l'image finale
+    && apt-get clean && rm -rf /var/lib/apt/lists/*
 
 # Définir le répertoire de travail dans le conteneur
 WORKDIR /var/www/html
