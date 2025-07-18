@@ -7,6 +7,7 @@ class Livre{
   private  $auteur;
   private  $anneePublication;
   private  $statut;
+  private  $utilisateur_id;
   
 
   public function __construct($titre, $auteur, $anneePublication){
@@ -14,6 +15,7 @@ class Livre{
         $this->auteur= $auteur;
         $this->anneePublication= $anneePublication;
         $this->statut= "disponible";
+        $this->utilisateur_id = null;
 
   }
 
@@ -21,29 +23,31 @@ class Livre{
     return  "Titre: " .$this->titre . " <br>Auteur: " . $this->auteur . "<br> Année de publication: " .$this->anneePublication;
     
   }
-  public function emprunter(PDO $conn) {
-    // Par exemple on ajoute une colonne `emprunté` dans la table
-    $stmt = $conn->prepare("UPDATE livres SET statut = 'emprunté' WHERE id = ?");
-    $stmt->execute([$this->id]);
+  public static function emprunter(PDO $conn, int $livreId, int $utilisateurId): bool {
+    // On met à jour le statut et on lie le livre à l'utilisateur
+    // On s'assure aussi que le livre est bien disponible pour éviter les "race conditions"
+    $stmt = $conn->prepare("UPDATE livre SET statut = 'emprunté', utilisateur_id = ? WHERE id = ? AND statut = 'disponible'");
+    $stmt->execute([$utilisateurId, $livreId]);
     if($stmt->rowCount() > 0) {
-        $this->statut = "emprunté";
         return true;
     } else {
         return false;
     }
 }
 
-  public function rendre(){
-    if($this->statut === "emprunté"){
-      $this->statut = "disponible";
-      return "Livre ". $this->titre ." rendue avec succès <br>";
-    }else{
-      return  "Livre ". $this->titre ." est déja disponible <br>";
-    }
-  }
+  public static function rendre(PDO $conn, int $livreId, int $utilisateurId): bool {
+    // On rend le livre en remettant son statut à "disponible" et en retirant l'ID de l'utilisateur
+    // On vérifie que c'est bien le bon utilisateur qui rend le livre
+    $stmt = $conn->prepare("UPDATE livre SET statut = 'disponible', utilisateur_id = NULL WHERE id = ? AND utilisateur_id = ?");
+    $stmt->execute([$livreId, $utilisateurId]);
+    return $stmt->rowCount() > 0;
+}
 
   public function getTitre(){
     return $this->titre;
+  }
+  public function getAuteur(){
+    return $this->auteur;
   }
   public function messageStatut(){
     if($this->statut === "disponible"){
@@ -57,26 +61,53 @@ class Livre{
     return $this->statut;
   }
 
-  public function save($connection){
-    $sql = "INSERT INTO livre (titre, auteur, anneePublication, statut) VALUES (?, ?, ?, ?)";
-     require_once __DIR__. "/../data/config.php";
+  public function setStatut($statut){
+    $this->statut = $statut;
+  }
+
+  public function getUtilisateurId(){
+      return $this->utilisateur_id;
+  }
+
+  public function setUtilisateurId($id){
+      $this->utilisateur_id = $id;
+  }
+
+  public function save($connection, $bibliotheque_id){
+    $sql = "INSERT INTO livre (titre, auteur, anneePublication, statut, bibliotheque_id) VALUES (?, ?, ?, ?, ?)";
     $stmt = $connection -> prepare($sql);
-    $stmt -> execute([$this->titre, $this->auteur, $this->anneePublication, $this->statut]);
+    $stmt -> execute([$this->titre, $this->auteur, $this->anneePublication, $this->statut, $bibliotheque_id]);
   }
 
   public function setId($id){
     $this->id =$id;
   }
-  public function getId($id){
-    $this->id =$id;
+  public function getId(){
+    return $this->id;
   }
 
     public static function fromArray(array $data): Livre {
-        $livre = new Livre($data['titre'], $data['auteur'], $data['annee']);
+        $livre = new Livre($data['titre'], $data['auteur'], $data['anneePublication']);
         if (isset($data['id'])) {
             $livre->setId($data['id']);
         }
         return $livre;
+    }
+
+    public static function findBorrowedByUserId(PDO $conn, int $utilisateurId): array {
+        $stmt = $conn->prepare("SELECT * FROM livre WHERE utilisateur_id = ?");
+        $stmt->execute([$utilisateurId]);
+        
+        $livres = [];
+        $livresData = $stmt->fetchAll(PDO::FETCH_ASSOC);
+        foreach ($livresData as $data) {
+            $livre = new Livre($data['titre'], $data['auteur'], $data['anneePublication']);
+            $livre->setId($data['id']);
+            $livre->setStatut($data['statut']);
+            $livre->setUtilisateurId($data['utilisateur_id']);
+            $livres[] = $livre;
+        }
+        return $livres;
     }
 
 }

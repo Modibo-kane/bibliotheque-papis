@@ -24,26 +24,26 @@ class Bibliotheque{
 
     public function listeDesLivresDisponibles(){
      $emprunte = [];
-     foreach($this->listeDesLivres as $user){
-      if($user->getStatut() === "emprunte"){
-        $emprunte[] = $user->afficherInfos();
+     foreach($this->listeDesLivres as $livre){
+      if($livre->getStatut() === "disponible"){
+        $emprunte[] = $livre->afficherInfos();
       }
      }
      if (empty($emprunte)) {
-        return "📭 Aucun user emprunte pour le moment.<br>";
+        return "📭 Aucun livre disponible pour le moment.<br>";
     }
 
     return implode("<br><br>", $emprunte);
     }
     public function listeDesLivresEmpruntes(){
      $emprunte = [];
-     foreach($this->listeDesLivres as $user){
-      if($user->getStatut() === "emprunté"){
-        $emprunte[] = $user->afficherInfos();
+     foreach($this->listeDesLivres as $livre){
+      if($livre->getStatut() === "emprunté"){
+        $emprunte[] = $livre->afficherInfos();
       }
      }
      if (empty($emprunte)) {
-        return "<br><br> Aucun user n'a emprunté pour le moment.<br>";
+        return "<br><br> Aucun livre n'a été emprunté pour le moment.<br>";
     }
 
     return implode("<br><br>", $emprunte);
@@ -82,15 +82,24 @@ public static function getAll($connection) {
         $stmtLivres = $connection->prepare("SELECT * FROM livre WHERE bibliotheque_id = ?");
         $stmtLivres->execute([$row['id']]);
         while ($livreRow = $stmtLivres->fetch(PDO::FETCH_ASSOC)) {
-            $livre = new Livre($livreRow['titre'], $livreRow['auteur'], $livreRow['annee']);
+            // On charge toutes les informations du livre depuis la BDD
+            $livre = new Livre($livreRow['titre'], $livreRow['auteur'], $livreRow['anneePublication']);
+            $livre->setId($livreRow['id']);
+            // Il faut ajouter les setters/getters pour statut et utilisateur_id dans la classe Livre si ce n'est pas fait
+            $livre->setStatut($livreRow['statut']); 
+            $livre->setUtilisateurId($livreRow['utilisateur_id']);
             $biblio->ajouterLivre($livre);
         }
 
         // Charger les utilisateurs
-        $stmtUsers = $connection->prepare("SELECT * FROM users WHERE bibliotheque_id = ?");
-        $stmtUsers->execute([$row['id']]);
+        $stmtUsers = $connection->prepare(
+            "SELECT u.* FROM users u 
+             JOIN bibliotheque_user bu ON u.id = bu.user_id 
+             WHERE bu.bibliotheque_id = ?"
+        );
+        $stmtUsers->execute([$biblio->getId()]);
         while ($userRow = $stmtUsers->fetch(PDO::FETCH_ASSOC)) {
-            $utilisateur = new Utilisateur($userRow['nom'], $userRow['email']);
+            $utilisateur = new Utilisateur($userRow['nom'], $userRow['prenom'], null); // On passe null pour le mot de passe car on ne le charge pas ici
             $biblio->ajouterUtilisateur($utilisateur);
         }
 
@@ -98,6 +107,12 @@ public static function getAll($connection) {
     }
 
     return $resultats;
+}
+
+public static function save($connection, $nom) {
+    $sql = "INSERT INTO bibliotheque (nom) VALUES (?)";
+    $stmt = $connection->prepare($sql);
+    $stmt->execute([$nom]);
 }
 
 }

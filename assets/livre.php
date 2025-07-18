@@ -1,6 +1,10 @@
 <!-- liste des livres de chaque bibliotheque -->
 
     <?php
+        // On s'assure que la session est démarrée
+        if (session_status() === PHP_SESSION_NONE) {
+            session_start();
+        }
         require_once __DIR__ . "/creerBibliotheque.php";
         $bibliotheque = Bibliotheque::getAll($connection);
         foreach ($bibliotheque as $biblio) {
@@ -11,19 +15,22 @@
                       echo "<div class='z10 relative h-full flex flex-col justifify-between gap-4'>";
                           echo "<h3 class='text-lg font-bold text-gray-800'>{$livre->afficherInfos()}</h3>";
                            echo "<div class='flex justify-between items-center'>";
-                              if($livre->getStatut() === "disponible") {
-                                 foreach ($biblio->getLivres() as $livre): ?>
-                                    <form method="POST" action="emprunter.php">
-                                        <input type="hidden" name="livre_id" value="<?= $livre->getId() ?>">
-                                        <button type="submit" class="bg-blue-500 text-white px-4 py-2 rounded duration-500 hover:bg-blue-600">
-                                            Emprunter
-                                        </button>
-                                    </form>
-                                <?php endforeach; 
-                              } else {
-                                  
-                                  echo "<p  class='px-4 py-2  cursor-pointer font-bold'>Emprunté </p>";
-
+                              // Logique d'affichage des boutons
+                              if ($livre->getStatut() === 'disponible' && isset($_SESSION['user_id'])) {
+                                  // Le livre est disponible et l'utilisateur est connecté -> Bouton Emprunter
+                                  echo "<form method='POST' action='../traitement.php?action=emprunter'>";
+                                  echo "<input type='hidden' name='livre_id' value='{$livre->getId()}'>";
+                                  echo "<button type='submit' class='bg-blue-500 text-white px-4 py-2 rounded duration-500 hover:bg-blue-600'>Emprunter</button>";
+                                  echo "</form>";
+                              } elseif ($livre->getStatut() === 'emprunté' && isset($_SESSION['user_id']) && $livre->getUtilisateurId() == $_SESSION['user_id']) {
+                                  // Le livre est emprunté PAR L'UTILISATEUR ACTUEL -> Bouton Rendre
+                                  echo "<form method='POST' action='../traitement.php?action=rendre'>";
+                                  echo "<input type='hidden' name='livre_id' value='{$livre->getId()}'>";
+                                  echo "<button type='submit' class='bg-green-500 text-white px-4 py-2 rounded duration-500 hover:bg-green-600'>Rendre</button>";
+                                  echo "</form>";
+                              } elseif ($livre->getStatut() === 'emprunté') {
+                                  // Le livre est emprunté par quelqu'un d'autre
+                                  echo "<p class='px-4 py-2 font-bold text-red-500'>Déjà Emprunté</p>";
                               }
                               echo "   <p> statut:{$livre->getStatut()} </p>";
                            echo "</div>";
@@ -45,4 +52,3 @@
             // foreach ($livres as $livre) {
             //     echo "<div>{$livre['titre']} - {$livre['auteur']} ({$livre['anneePublication']})</div>";
             // }
-
