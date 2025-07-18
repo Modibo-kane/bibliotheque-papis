@@ -1,8 +1,7 @@
 <?php
-// On démarre la session sur chaque page où le header est inclus
-// pour avoir accès aux variables de session.
 if (session_status() === PHP_SESSION_NONE) {
-    session_start();
+    session_start();// On démarre la session sur chaque page où le header est inclus
+// pour avoir accès aux variables de session.
 }
 ?>
 <header class="bg-gray-800 text-white flex justify-evenly items-center p-4 w-full ">
