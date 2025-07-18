@@ -165,9 +165,19 @@ switch ($action) {
             $bibliothequeId = (int)$_POST['bibliotheque_id'];
             $utilisateurId = (int)$_SESSION['user_id'];
 
-            // On insère la nouvelle relation dans la table pivot
-            // On utilise IGNORE pour éviter une erreur si l'utilisateur essaie de rejoindre une bibliothèque où il est déjà
-            $stmt = $connection->prepare("INSERT IGNORE INTO bibliotheque_user (bibliotheque_id, user_id) VALUES (?, ?)");
+            // La syntaxe pour insérer en ignorant les doublons est différente entre MySQL et PostgreSQL.
+            // On détecte le pilote pour utiliser la bonne requête.
+            $driver = $connection->getAttribute(PDO::ATTR_DRIVER_NAME);
+
+            if ($driver === 'mysql') {
+                // Syntaxe pour MySQL
+                $sql = "INSERT IGNORE INTO bibliotheque_user (bibliotheque_id, user_id) VALUES (?, ?)";
+            } else { // pgsql
+                // Syntaxe pour PostgreSQL (nécessite une contrainte UNIQUE sur les deux colonnes)
+                $sql = "INSERT INTO bibliotheque_user (bibliotheque_id, user_id) VALUES (?, ?) ON CONFLICT (bibliotheque_id, user_id) DO NOTHING";
+            }
+
+            $stmt = $connection->prepare($sql);
             $stmt->execute([$bibliothequeId, $utilisateurId]);
 
             header('Location: Public/listeBibliotheque.php?join=success');

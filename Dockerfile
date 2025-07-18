@@ -4,10 +4,12 @@ FROM php:8.1-apache
 # Mettre à jour les paquets, installer les extensions et activer les modules en une seule étape
 # pour optimiser la taille de l'image.
 RUN apt-get update && apt-get upgrade -y \
-    # Installer les extensions pour MySQL et PostgreSQL
+    # Installer les dépendances système nécessaires. libpq-dev est requis pour pdo_pgsql.
+    && apt-get install -y --no-install-recommends libpq-dev \
+    # Installer les extensions PHP pour MySQL et PostgreSQL.
     && docker-php-ext-install pdo_mysql pdo_pgsql \
     && a2enmod rewrite \
-    # Nettoyer le cache apt pour réduire la taille de l'image finale
+    # Nettoyer le cache apt pour réduire la taille de l'image.
     && apt-get clean && rm -rf /var/lib/apt/lists/*
 
 # Définir le répertoire de travail dans le conteneur
