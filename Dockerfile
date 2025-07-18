@@ -4,7 +4,8 @@ FROM php:8.1-apache
 # Mettre à jour les paquets, installer les extensions et activer les modules en une seule étape
 # pour optimiser la taille de l'image.
 RUN apt-get update && apt-get upgrade -y \
-    && docker-php-ext-install pdo_mysql \
+    # Installer les extensions pour MySQL et PostgreSQL
+    && docker-php-ext-install pdo_mysql pdo_pgsql \
     && a2enmod rewrite \
     # Nettoyer le cache apt pour réduire la taille de l'image finale
     && apt-get clean && rm -rf /var/lib/apt/lists/*
