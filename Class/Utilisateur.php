@@ -39,9 +39,16 @@ class Utilisateur{
 }
 
 public static function findSharedLibraryUsers(PDO $conn, int $currentUserId): array {
+    // On détecte le pilote de BDD pour utiliser la bonne fonction d'agrégation de chaînes.
+    // GROUP_CONCAT pour MySQL, STRING_AGG pour PostgreSQL.
+    $driver = $conn->getAttribute(PDO::ATTR_DRIVER_NAME);
+    $aggFunction = ($driver === 'mysql') 
+        ? "GROUP_CONCAT(b.nom SEPARATOR ', ')" 
+        : "STRING_AGG(b.nom, ', ')";
+
     $sql = "SELECT
                 u.id, u.nom, u.prenom,
-                GROUP_CONCAT(b.nom SEPARATOR ', ') as shared_libraries
+                {$aggFunction} as shared_libraries
             FROM users u
             JOIN bibliotheque_user bu ON u.id = bu.user_id
             JOIN bibliotheque b ON bu.bibliotheque_id = b.id
