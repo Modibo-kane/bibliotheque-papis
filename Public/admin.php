@@ -49,7 +49,7 @@ switch ($view) {
     <h1 class="text-3xl font-bold mb-6">Panneau d'Administration</h1>
 
     <!-- Onglets de navigation -->
-    <div class="flex space-x-2 mb-6 border-b">
+    <div class="flex space-x-2 mb-6 border-b overflow-x-auto pb-2">
         <a href="admin.php?view=livres" class="px-4 py-2 text-lg font-semibold <?= $view === 'livres' ? 'border-b-2 border-blue-500 text-blue-600' : 'text-gray-500 hover:text-blue-600' ?>">Livres</a>
         <a href="admin.php?view=users" class="px-4 py-2 text-lg font-semibold <?= $view === 'users' ? 'border-b-2 border-blue-500 text-blue-600' : 'text-gray-500 hover:text-blue-600' ?>">Utilisateurs</a>
         <a href="admin.php?view=bibliotheques" class="px-4 py-2 text-lg font-semibold <?= $view === 'bibliotheques' ? 'border-b-2 border-blue-500 text-blue-600' : 'text-gray-500 hover:text-blue-600' ?>">Bibliothèques</a>
@@ -89,12 +89,12 @@ switch ($view) {
         <?php elseif ($view === 'users'): ?>
             <h2 class="text-2xl font-semibold mb-4">Gestion des Utilisateurs</h2>
             <?php foreach ($data as $user): ?>
-                <div class="flex items-center justify-between border-b py-3 last:border-b-0">
-                    <div>
+                <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between border-b py-3 last:border-b-0">
+                    <div class="mb-2 sm:mb-0">
                         <p class="font-bold text-lg"><?= htmlspecialchars($user['nom']) ?> (<?= htmlspecialchars($user['prenom']) ?>)</p>
                         <p class="text-sm text-gray-600">Rôle : <span class="font-semibold <?= $user['role'] === 'admin' ? 'text-red-500' : 'text-gray-700' ?>"><?= htmlspecialchars($user['role']) ?></span></p>
                     </div>
-                    <?php if ($user['role'] !== 'admin' && $_SESSION['user_id'] != $user['id']): ?>
+                    <?php if ($user['role'] !== 'admin' && isset($_SESSION['user_id']) && $_SESSION['user_id'] != $user['id']): ?>
                         <form action="../traitement.php?action=grantAdmin" method="POST">
                             <input type="hidden" name="user_id" value="<?= $user['id'] ?>">
                             <button type="submit" class="bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600">Promouvoir Admin</button>

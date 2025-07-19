@@ -74,7 +74,8 @@ class Livre{
   }
 
   public function save($connection, $bibliotheque_id){
-    $sql = "INSERT INTO livre (titre, auteur, anneePublication, statut, bibliotheque_id) VALUES (?, ?, ?, ?, ?)";
+    // Utilisation de minuscules pour les noms de colonnes pour la compatibilité (PostgreSQL)
+    $sql = "INSERT INTO livre (titre, auteur, anneepublication, statut, bibliotheque_id) VALUES (?, ?, ?, ?, ?)";
     $stmt = $connection -> prepare($sql);
     $stmt -> execute([$this->titre, $this->auteur, $this->anneePublication, $this->statut, $bibliotheque_id]);
   }
@@ -98,7 +99,9 @@ class Livre{
     }
 
     public static function fromArray(array $data): Livre {
-        $livre = new Livre($data['titre'], $data['auteur'], $data['anneePublication']);
+        // Gérer la casse différente des clés pour la compatibilité MySQL/PostgreSQL
+        $annee = $data['anneePublication'] ?? $data['anneepublication'] ?? null;
+        $livre = new Livre($data['titre'], $data['auteur'], $annee);
         if (isset($data['id'])) {
             $livre->setId($data['id']);
         }
@@ -112,7 +115,9 @@ class Livre{
         $livres = [];
         $livresData = $stmt->fetchAll(PDO::FETCH_ASSOC);
         foreach ($livresData as $data) {
-            $livre = new Livre($data['titre'], $data['auteur'], $data['anneePublication']);
+            // Gérer la casse différente des clés pour la compatibilité MySQL/PostgreSQL
+            $annee = $data['anneePublication'] ?? $data['anneepublication'] ?? null;
+            $livre = new Livre($data['titre'], $data['auteur'], $annee);
             $livre->setId($data['id']);
             $livre->setStatut($data['statut']);
             $livre->setUtilisateurId($data['utilisateur_id']);

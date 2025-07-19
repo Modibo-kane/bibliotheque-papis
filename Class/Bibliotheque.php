@@ -83,7 +83,9 @@ public static function getAll($connection) {
         $stmtLivres->execute([$row['id']]);
         while ($livreRow = $stmtLivres->fetch(PDO::FETCH_ASSOC)) {
             // On charge toutes les informations du livre depuis la BDD
-            $livre = new Livre($livreRow['titre'], $livreRow['auteur'], $livreRow['anneePublication']);
+            // Gérer la casse différente des clés pour la compatibilité (PostgreSQL/MySQL)
+            $annee = $livreRow['anneePublication'] ?? $livreRow['anneepublication'] ?? null;
+            $livre = new Livre($livreRow['titre'], $livreRow['auteur'], $annee);
             $livre->setId($livreRow['id']);
             // Il faut ajouter les setters/getters pour statut et utilisateur_id dans la classe Livre si ce n'est pas fait
             $livre->setStatut($livreRow['statut']); 
