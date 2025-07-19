@@ -10,6 +10,8 @@
                 <a href="../Public/listeBibliotheque.php" class="text-gray-300 hover:text-white">Bibliothèques</a>
                 <?php if (isset($_SESSION['user_role']) && $_SESSION['user_role'] === 'admin'): ?>
                     <a href="../Public/admin.php" class="text-yellow-400 hover:text-yellow-200">Admin</a>
+                    <a href="../assets/creerLivre.php" class="text-gray-300 hover:text-white">Ajouter Livre</a>
+                    <a href="../assets/creerBibliothequeForm.php" class="text-gray-300 hover:text-white">Ajouter Biblio</a>
                 <?php endif; ?>
 
                 <?php if (isset($_SESSION['user_id'])): ?>
