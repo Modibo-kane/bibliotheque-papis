@@ -1,0 +1,103 @@
+-- Suppression des tables si elles existent déjà, pour permettre une ré-exécution propre du script.
+-- L'option CASCADE supprime aussi les objets qui en dépendent (comme les contraintes).
+DROP TABLE IF EXISTS bibliotheque_user CASCADE;
+DROP TABLE IF EXISTS livre CASCADE;
+DROP TABLE IF EXISTS users CASCADE;
+DROP TABLE IF EXISTS bibliotheque CASCADE;
+
+
+-- =================================================================
+-- Table pour les utilisateurs (users)
+-- =================================================================
+CREATE TABLE users (
+    -- SERIAL est le type PostgreSQL pour un entier auto-incrémenté (équivalent de AUTO_INCREMENT)
+    id SERIAL PRIMARY KEY,
+    nom VARCHAR(255) NOT NULL UNIQUE, -- Le nom d'utilisateur doit être unique pour la connexion
+    prenom VARCHAR(255) NOT NULL,
+    password VARCHAR(255) NOT NULL, -- Pour stocker le mot de passe haché
+    role VARCHAR(50) NOT NULL DEFAULT 'user' -- Rôle par défaut pour les nouveaux inscrits
+);
+
+COMMENT ON TABLE users IS 'Contient les informations sur les utilisateurs inscrits.';
+COMMENT ON COLUMN users.nom IS 'Nom d''utilisateur unique utilisé pour la connexion.';
+COMMENT ON COLUMN users.role IS 'Définit les permissions (ex: user, admin).';
+
+
+-- =================================================================
+-- Table pour les bibliothèques (bibliotheque)
+-- =================================================================
+CREATE TABLE bibliotheque (
+    id SERIAL PRIMARY KEY,
+    nom VARCHAR(255) NOT NULL UNIQUE -- Le nom de la bibliothèque doit être unique
+);
+
+COMMENT ON TABLE bibliotheque IS 'Liste des bibliothèques disponibles dans le système.';
+
+
+-- =================================================================
+-- Table pour les livres (livre)
+-- =================================================================
+CREATE TABLE livre (
+    id SERIAL PRIMARY KEY,
+    titre VARCHAR(255) NOT NULL,
+    auteur VARCHAR(255) NOT NULL,
+    anneePublication INT,
+    statut VARCHAR(50) NOT NULL DEFAULT 'disponible', -- Statut initial d'un livre ajouté
+
+    -- Clé étrangère vers la bibliothèque à laquelle le livre appartient (relation Un-à-Plusieurs)
+    bibliotheque_id INT NOT NULL,
+
+    -- Clé étrangère vers l'utilisateur qui a emprunté le livre (peut être NULL)
+    utilisateur_id INT,
+
+    -- Définition des contraintes de clé étrangère
+    CONSTRAINT fk_livre_bibliotheque
+        FOREIGN KEY(bibliotheque_id)
+        REFERENCES bibliotheque(id)
+        ON DELETE CASCADE, -- Si une bibliothèque est supprimée, tous ses livres le sont aussi.
+
+    CONSTRAINT fk_livre_utilisateur
+        FOREIGN KEY(utilisateur_id)
+        REFERENCES users(id)
+        ON DELETE SET NULL -- Si un utilisateur est supprimé, le livre qu'il a emprunté redevient simplement disponible.
+);
+
+COMMENT ON TABLE livre IS 'Catalogue de tous les livres de toutes les bibliothèques.';
+COMMENT ON COLUMN livre.statut IS 'Statut actuel du livre (disponible, emprunté).';
+COMMENT ON COLUMN livre.bibliotheque_id IS 'Référence à la bibliothèque propriétaire du livre.';
+COMMENT ON COLUMN livre.utilisateur_id IS 'Référence à l''utilisateur qui a emprunté le livre (NULL si disponible).';
+
+
+-- =================================================================
+-- Table de liaison pour la relation Plusieurs-à-Plusieurs
+-- entre les utilisateurs et les bibliothèques (bibliotheque_user)
+-- =================================================================
+CREATE TABLE bibliotheque_user (
+    user_id INT NOT NULL,
+    bibliotheque_id INT NOT NULL,
+
+    -- Clé primaire composite pour garantir qu'un utilisateur ne peut rejoindre la même bibliothèque qu'une seule fois.
+    PRIMARY KEY (user_id, bibliotheque_id),
+
+    -- Définition des contraintes de clé étrangère
+    CONSTRAINT fk_bu_user
+        FOREIGN KEY(user_id)
+        REFERENCES users(id)
+        ON DELETE CASCADE, -- Si un utilisateur est supprimé, ses adhésions aux bibliothèques sont supprimées.
+
+    CONSTRAINT fk_bu_bibliotheque
+        FOREIGN KEY(bibliotheque_id)
+        REFERENCES bibliotheque(id)
+        ON DELETE CASCADE -- Si une bibliothèque est supprimée, toutes les adhésions sont supprimées.
+);
+
+COMMENT ON TABLE bibliotheque_user IS 'Table de jonction pour lier les utilisateurs aux bibliothèques qu''ils ont rejointes.';
+
+
+-- =================================================================
+-- Création d'index pour améliorer les performances des requêtes
+-- =================================================================
+CREATE INDEX idx_livre_statut ON livre(statut);
+CREATE INDEX idx_livre_bibliotheque_id ON livre(bibliotheque_id);
+CREATE INDEX idx_livre_utilisateur_id ON livre(utilisateur_id);
+

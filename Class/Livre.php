@@ -86,6 +86,17 @@ class Livre{
     return $this->id;
   }
 
+    public static function getAll(PDO $conn): array {
+        $stmt = $conn->prepare(
+            "SELECT l.*, b.nom as bibliotheque_nom 
+             FROM livre l 
+             LEFT JOIN bibliotheque b ON l.bibliotheque_id = b.id 
+             ORDER BY l.titre ASC"
+        );
+        $stmt->execute();
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
+
     public static function fromArray(array $data): Livre {
         $livre = new Livre($data['titre'], $data['auteur'], $data['anneePublication']);
         if (isset($data['id'])) {
